@@ -1,0 +1,7 @@
+
+package edu.hm.cs.quiz.server;
+
+
+public interface Game extends Runnable {
+
+}

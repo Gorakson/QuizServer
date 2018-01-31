@@ -1,0 +1,34 @@
+package edu.hm.cs.quiz.server.protocol;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.NoSuchElementException;
+
+import edu.hm.cs.quiz.server.ClientConnection;
+import edu.hm.cs.quiz.server.Game;
+
+public class QuizProtocol implements Runnable {
+    private ProtocolState currentState;
+
+    public QuizProtocol(Game game, Collection<ClientConnection> clients) {
+        if (game == null || clients == null) {
+            throw new NullPointerException();
+        } else if (clients.size() == 0) {
+            throw new NoSuchElementException();
+        }
+        
+        currentState = new WelcomeState(game, clients);
+    }
+
+    @Override
+    public void run() {
+        while (!currentState.isFinished()) {
+            currentState.handle();
+            
+            if (currentState.getSuccessor().isPresent()) {
+                currentState = currentState.getSuccessor().get();
+            }
+        }
+    }
+}

@@ -1,0 +1,47 @@
+package edu.hm.cs.quiz.server.protocol;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+
+import edu.hm.cs.quiz.server.ClientConnection;
+import edu.hm.cs.quiz.server.Game;
+import edu.hm.cs.quiz.server.Player;
+
+public class GameoverState extends ABCState {
+    
+    private static final String GAME_OVER_IDENTIFIER = "GameOver:";
+
+    public GameoverState(Game game, Collection<ClientConnection> clients) {
+        super(game, clients);
+    }
+
+    @Override
+    public void handle() {
+        Map<Player, Integer> scores = getGame().getScores();
+        final StringBuilder builder = new StringBuilder();
+        final String playerScoreSeperator = " - ";
+        
+        scores.keySet().stream().forEach(player -> {
+            builder.append(GAME_OVER_IDENTIFIER)
+                   .append(player.getName())
+                   .append(playerScoreSeperator)
+                   .append(scores.get(player))
+                   .append(" Punkte")
+                   .append(System.lineSeparator());
+        });
+        
+        final String text = builder.toString();
+        
+        getClients().parallelStream().forEach(client -> {
+            client.postText(text);
+        });
+        
+        setFinished(true);
+    }
+
+    @Override
+    public Optional<ProtocolState> getSuccessor() {
+        return Optional.empty();
+    }
+}

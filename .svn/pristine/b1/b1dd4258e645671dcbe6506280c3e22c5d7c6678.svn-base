@@ -1,0 +1,57 @@
+package edu.hm.cs.quiz.server.protocol;
+
+import java.util.Collection;
+import java.util.Optional;
+
+import edu.hm.cs.quiz.server.Answer;
+import edu.hm.cs.quiz.server.ClientConnection;
+import edu.hm.cs.quiz.server.Game;
+import edu.hm.cs.quiz.server.Question;
+
+public class AwaitAnswerState extends ABCState {
+
+    private static final String ANSWER_IDENTIFIER = "Answer:";
+    
+    public AwaitAnswerState(Game game, Collection<ClientConnection> clients) {
+        super(game, clients);
+    }
+
+    @Override
+    public void handle() {
+        getClients().parallelStream().forEach(client -> {
+            String answerText = client.getText();
+            
+            while (!answerText.startsWith(ANSWER_IDENTIFIER)) {
+                answerText = client.getText();
+            }
+            
+            final Answer answer;
+            
+            try {
+                answer = Answer.valueOf(answerText.replaceFirst(ANSWER_IDENTIFIER, ""));
+            } catch (IllegalArgumentException exception) {
+                throw new RuntimeException("This really shouldn't happen.");
+            }
+            
+            client.addAnswer(answer);
+        });
+        
+        setFinished(true);
+    }
+
+    @Override
+    public Optional<ProtocolState> getSuccessor() {
+        final ProtocolState result;
+        
+        if (getGame().hasQuestion()) {
+            final Question nextQuestion = getGame().nextQuestion();
+            getClients().forEach(client -> client.setQuestion(nextQuestion));
+            result = new PostQuestionState(getGame(), getClients());
+        } else {
+            result = new GameoverState(getGame(), getClients());
+        }
+        
+        return Optional.of(result);
+    }
+
+}

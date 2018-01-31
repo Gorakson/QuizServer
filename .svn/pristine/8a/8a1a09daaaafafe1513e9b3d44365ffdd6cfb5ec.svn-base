@@ -1,0 +1,21 @@
+package edu.hm.cs.quiz.server;
+
+public class Question {
+    
+    private final String question;
+    private final Answer answer;
+    
+    public Question(String question, Answer answer) {
+        super();
+        this.question = question;
+        this.answer = answer;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public Answer getAnswer() {
+        return answer;
+    }
+}

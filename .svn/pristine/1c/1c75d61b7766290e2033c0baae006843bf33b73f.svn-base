@@ -1,0 +1,25 @@
+package edu.hm.cs.quiz.server.protocol;
+
+import java.util.Collection;
+import java.util.Optional;
+
+import edu.hm.cs.quiz.server.ClientConnection;
+import edu.hm.cs.quiz.server.Game;
+
+public class WelcomeState extends ABCState {
+    
+    public WelcomeState(Game game, Collection<ClientConnection> clients) {
+        super(game, clients);
+    }
+
+    @Override
+    public void handle() {
+        getClients().forEach(client -> client.postText("Welcome " + client.getPlayer().getName()));
+        setFinished(true);
+    }
+
+    @Override
+    public Optional<ProtocolState> getSuccessor() {
+        return Optional.of(new PostQuestionState(getGame(), getClients()));
+    }
+}

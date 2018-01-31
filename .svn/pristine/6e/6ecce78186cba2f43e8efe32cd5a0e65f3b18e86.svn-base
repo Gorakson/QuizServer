@@ -1,0 +1,5 @@
+package edu.hm.cs.quiz.server;
+
+public class ClientConnection {
+
+}

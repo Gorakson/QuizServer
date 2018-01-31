@@ -1,0 +1,73 @@
+
+package edu.hm.cs.quiz.server;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import edu.hm.cs.quiz.server.protocol.QuizProtocol;
+
+public class Game implements Runnable {
+
+    private final QuizProtocol protocol;
+    private final List<Question> questions;
+    private final Collection<ClientConnection> clients;
+    private int currentQuestionIndex;
+    
+    public Game(Collection<ClientConnection> clients) {
+        if (clients == null) {
+            throw new NullPointerException();
+        }
+        
+        protocol = new QuizProtocol(this, clients);
+        this.questions = new ArrayList<>();
+        this.clients = clients;
+        currentQuestionIndex = 0;
+    }
+    
+    @Override
+    public void run() {
+        protocol.run();
+    }
+    
+    public int getNumPlayers() {
+        return clients.size();
+    }
+    
+    public Map<Player, Integer> getScores() {
+        final Map<Player, Integer> scores = new HashMap<>();
+        
+        questions.stream().forEach(question -> {
+            clients.stream().forEach(client -> {
+                final Player player = client.getPlayer();
+                if (scores.containsKey(player)) {
+                    scores.put(player, scores.get(player) + question.getScore(player));
+                } else {
+                    scores.put(player, question.getScore(player));
+                }
+            });
+        });
+        
+        return scores;
+    }
+    
+    public synchronized boolean hasQuestion() {
+        return currentQuestionIndex + 1 < questions.size();
+    }
+    
+    public synchronized Question nextQuestion() {
+        final Question result;
+        
+        if (hasQuestion()) {
+            result = questions.get(++currentQuestionIndex);
+        } else {
+            throw new IllegalStateException();
+        }
+        
+        return result;
+    }
+}

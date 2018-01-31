@@ -1,0 +1,10 @@
+package edu.hm.cs.quiz.server;
+
+/**
+ * A provider of questions.
+ * @author Thomas Pfaffinger, thomas.pfaffinger@hm.edu
+ * @version 1.0
+ */
+public interface QuestionSource {
+    Question getQuestion();
+}

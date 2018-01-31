@@ -1,0 +1,59 @@
+package edu.hm.cs.quiz.server.protocol;
+
+import java.util.Collection;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import edu.hm.cs.quiz.server.Answer;
+import edu.hm.cs.quiz.server.ClientConnection;
+import edu.hm.cs.quiz.server.Game;
+import edu.hm.cs.quiz.server.Question;
+
+public class AwaitAnswerState extends ABCState {
+
+
+    private final AtomicBoolean hasAnswer;
+    
+    public AwaitAnswerState(Game game, Collection<ClientConnection> clients) {
+        super(game, clients);
+        hasAnswer = new AtomicBoolean(false);
+    }
+
+    @Override
+    public void handle() {
+        getClients().parallelStream().forEach(client -> {
+            final String answerText = client.getText();
+            
+            if (!hasAnswer.get() && answerText.startsWith(ANSWER_IDENTIFIER)) {
+                hasAnswer.set(true);
+                
+                final Answer answer;
+                
+                try {
+                    answer = Answer.valueOf(answerText.replaceFirst(ANSWER_IDENTIFIER, ""));
+                } catch (IllegalArgumentException exception) {
+                    throw new RuntimeException("This really shouldn't happen.");
+                }
+                
+                getGame().getQuestion().addPlayerAnswer(client.getPlayer(), answer);
+            }
+        });
+        
+        setFinished(true);
+    }
+
+    @Override
+    public Optional<ProtocolState> getSuccessor() {
+        final ProtocolState result;
+        
+        if (getGame().hasNextQuestion()) {
+            getGame().nextQuestion();
+            result = new PostQuestionState(getGame(), getClients());
+        } else {
+            result = new GameoverState(getGame(), getClients());
+        }
+        
+        return Optional.of(result);
+    }
+
+}

@@ -1,0 +1,8 @@
+package edu.hm.cs.quiz.server;
+
+public enum Answer {
+    /** Yes is the correct answer to a question. */
+    Ja,
+    /** No is the correct answer to a question. */
+    Nein
+}

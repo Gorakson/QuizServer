@@ -1,0 +1,115 @@
+package edu.hm.cs.quiz.server;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+
+public class ClientConnection implements Runnable {
+    private static final String PROTOCOL_IDENTIFIER = "Protocol";
+    private static final String ANSWER_IDENTIFIER = "Answer:";
+    private static final String QUESTION_IDENTIFIER = "Question:";
+    private static final String GAME_OVER_IDENTIFIER = "GameOver:";
+    /** Connection to the client. */
+    private final Socket client;
+    /** Flag: true if the currentQuestion changed, false otherwise. */
+    private final BufferedReader reader;
+    private final PrintWriter writer;
+    /** The player. */
+    private final Player player;
+    private Question currentQuestion;
+    private boolean gameOver;
+    private boolean readyForNextQuestion;
+    
+    /**
+     * Ctor.
+     * @throws IOException 
+     */
+    public ClientConnection(Socket client) throws IOException {       
+        this.client = client;
+        this.player = new Player();
+        reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+        writer = new PrintWriter(client.getOutputStream());
+    }
+    
+    public synchronized void setQuestion(Question question) {
+        if (currentQuestion != null) { // Is there a previous question?
+            final String text = PROTOCOL_IDENTIFIER + currentQuestion.getQuestion() + ", " + currentQuestion.getCorrectAnswer() + ", "
+                                + currentQuestion.getScore(player);
+            writer.write(text);
+        }
+        currentQuestion = question;
+        readyForNextQuestion = false;
+        notifyAll();
+    }
+    
+    /**
+     * Yields the player.
+     * @return The player. Not null.
+     */
+    public Player getPlayer() {
+        return player;
+    }
+    
+    public void close() {
+        try {
+            reader.close();
+            writer.close();
+            client.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+    }
+    
+    public synchronized void gameOver(String message) {
+        writer.write(message);
+        gameOver = true;
+    }
+
+    @Override
+    public void run() {
+        while (!gameOver) {
+            synchronized (this) {
+                while (!readyForNextQuestion && !gameOver) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        throw new AssertionError();
+                    }
+                }
+                
+                if (!gameOver) {
+                    postQuestion();
+                    receiveAnswer();
+                } 
+            }
+        }
+    }
+    
+    private void postQuestion() {
+        readyForNextQuestion = false;
+        writer.write(QUESTION_IDENTIFIER + currentQuestion.getQuestion() + System.lineSeparator());
+    }
+    
+    private void receiveAnswer() {
+        final String answerText;
+        
+        try {
+            answerText = reader.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException();
+        }
+        
+        final Answer answer;
+        
+        try {
+            answer = Answer.valueOf(answerText.replaceFirst(ANSWER_IDENTIFIER, ""));
+        } catch (IllegalArgumentException exception) {
+            throw new RuntimeException("This really shouldn't happen.");
+        }
+        
+        currentQuestion.addPlayerAnswer(player, answer);
+    }
+}

@@ -1,0 +1,44 @@
+package edu.hm.cs.quiz.server.protocol;
+
+import java.util.Collection;
+import java.util.NoSuchElementException;
+
+import edu.hm.cs.quiz.server.ClientConnection;
+import edu.hm.cs.quiz.server.Game;
+
+abstract class ABCState implements ProtocolState {
+
+    private final Game game;
+    private final Collection<ClientConnection> clients;
+    private boolean isFinished;
+    
+    public ABCState(Game game, Collection<ClientConnection> clients) {
+        if (game == null || clients == null) {
+            throw new NullPointerException();
+        } else if (clients.size() == 0) {
+            throw new NoSuchElementException();
+        }
+        
+        this.game = game;
+        this.clients = clients;
+        isFinished = false;
+    }
+
+    @Override
+    public synchronized boolean isFinished() {
+        return isFinished;
+    }
+
+    synchronized void setFinished(boolean finished) {
+        isFinished = finished;
+        notifyAll();
+    }
+    
+    Game getGame() {
+        return game;
+    }
+    
+    Collection<ClientConnection> getClients() {
+        return clients;
+    }
+}

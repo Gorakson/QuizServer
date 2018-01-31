@@ -1,0 +1,15 @@
+package edu.hm.cs.quiz.server.protocol;
+
+import java.util.Optional;
+
+/**
+ * Interface for a network protocol state.
+ * 
+ * @author Thomas
+ *
+ */
+interface ProtocolState {
+    void handle();
+    boolean isFinished();
+    Optional<ProtocolState> getSuccessor();
+}

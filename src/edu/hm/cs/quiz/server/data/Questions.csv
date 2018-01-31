@@ -1,0 +1,14 @@
+Eine statische Methode kann auf eine Objektvariable ihrer Klasse zugeifen,Nein
+Eine Klasse kann mehrere Interfaces implementieren,Ja
+Threads kommunizieren über den Hauptspeicher,Ja
+Jede for-Schleife kann in eine entsprechende while-Schleife umgewandelt werden,Ja
+Die Binärzahl 110001 entspricht der Dezimalzahl 47,Nein
+Der Java Compiler ist Teil der Java Runtime,Nein
+Java zählt als Programmiersprache zu den formalen Sprachen,Ja
+Eine Java Klasse darf maximal von einer Klasse abgeleitet sein,Ja
+Ein Java Interface darf maximal von einem Interface abgeleitet sein,Nein
+Klassenvariablen kann aus Objektmethoden heraus ein Wert zugewiesen werden,Ja
+Der Aufruf eines Konstruktors der Basisklasse mit super muss immer die erste Anweisung im Konstruktor sein,Ja
+Jede Klasse erbt automatisch den Default-Konstruktor ihrer Basisklasse,Nein
+In einer Java Anwendung mit mehreren Klassen darf maximal eine main-Methode definiert sein,Nein
+Die Lebensdauer einer Objektvariable ist an die Lebensdauer ihres umgebenden Objekts gebunden,Ja

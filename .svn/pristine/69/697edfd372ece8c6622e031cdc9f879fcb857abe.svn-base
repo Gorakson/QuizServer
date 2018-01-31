@@ -1,0 +1,107 @@
+package edu.hm.cs.quiz.server;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+
+public class ClientConnection {
+
+    private final Socket client;
+    /** The question that is currently to be answered by the players. */
+    private Question currentQuestion;
+    /** Flag: true if the currentQuestion changed, false otherwise. */
+    private final BufferedReader reader;
+    private final PrintWriter writer;
+    /** The player. */
+    private final Player player;
+    
+    /**
+     * Ctor.
+     * @throws IOException 
+     */
+    public ClientConnection(Socket client) throws IOException {       
+        this.client = client;
+        this.player = new Player();
+        reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+        writer = new PrintWriter(client.getOutputStream());
+    }
+    
+    /**
+     * Sets the current question for players to answer.
+     * @param newQuestion The question that is to be answered by the player. Not null
+     */
+    public void setQuestion(Question newQuestion) {
+        if (newQuestion == null) {
+            throw new IllegalArgumentException();
+        }
+        System.out.println(client.isClosed());
+        currentQuestion = newQuestion;
+    }
+    
+    public Question getQuestion() {
+        return currentQuestion;
+    }
+    
+    /**
+     * Yields the player.
+     * @return The player. Not null.
+     */
+    public Player getPlayer() {
+        return player;
+    }
+    
+    public void close() {
+        
+        try {
+            reader.close();
+            writer.close();
+            client.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+    }
+    
+    /**
+     * Sends a text to the client.
+     * @param text The text to be sent.
+     */
+    public void postText(String text) {
+        if (text == null) {
+            throw new NullPointerException();
+        }
+        System.out.println(text);
+        writer.write(text);
+    }
+    
+    /**
+     * Sends the question text to the client.
+     */
+    public void postQuestion() {
+        postText(currentQuestion.getQuestion());
+    }
+    
+    /**
+     * Gets a text from the client. Will block until there is a text.
+     * @return The text from the client.
+     */
+    public String getText() {  
+        String result;
+
+        try {
+            result = reader.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+            result = null;
+        }
+
+        
+        return result;
+    }
+    
+    public void addAnswer(Answer answer) {
+        currentQuestion.addPlayerAnswer(player, answer);
+    }
+}

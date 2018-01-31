@@ -1,0 +1,54 @@
+package edu.hm.cs.quiz.server;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.stream.IntStream;
+
+public class GameServer implements Runnable {
+
+    private static final int PORT = 1337;
+    private static final int NUM_PLAYERS = 2;
+    private Queue<Socket> waitingClients;
+    
+    public GameServer() {
+        waitingClients = new LinkedList<>();
+    }
+
+    @Override
+    public void run() {
+        try (final ServerSocket socket = new ServerSocket(PORT)) {
+            while (true) {
+                try (final Socket client = socket.accept()) {
+                    waitingClients.add(client);
+                    
+                    while (waitingClients.size() >= NUM_PLAYERS) {
+                        final Collection<ClientConnection> clients = new LinkedList<>();
+                        
+                        IntStream.range(0, NUM_PLAYERS).forEach(unused -> {
+                            final ClientConnection clientConnection = new ClientConnection(waitingClients.poll());
+                            clientConnection.run();
+                            clients.add(clientConnection);
+                        });
+                        
+                        final Game game = new Game(clients);
+                        new Thread( () -> game.run() );
+                    }
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                } 
+            }
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+    }
+    
+    public static void main(String... args) {
+        final Game game = new Game(new ArrayList<ClientConnection>());
+        game.print();
+    }
+}

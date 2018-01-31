@@ -1,0 +1,89 @@
+package edu.hm.cs.quiz.server;
+
+import java.net.Socket;
+
+public class ClientConnection implements Runnable {
+
+    private final Socket client;
+    /** The question that is currently to be answered by the players. */
+    private Question currentQuestion;
+    /** Flag: true if the currentQuestion changed, false otherwise. */
+    
+    /** The player. */
+    private final Player player;
+    
+    /**
+     * Ctor.
+     */
+    public ClientConnection(Socket client) {       
+        this.client = client;
+        this.player = new Player();
+    }
+    
+    @Override
+    public void run() {
+        synchronized (currentQuestion) {
+            // Post question
+            while (currentQuestion == null) {
+                try {
+                    currentQuestion.wait();
+                } catch (InterruptedException e) {
+                    throw new AssertionError();
+                }
+            }
+        }
+    }
+    
+    /**
+     * Sets the current question for players to answer.
+     * @param newQuestion The question that is to be answered by the player. Not null
+     */
+    public void setQuestion(Question newQuestion) {
+        if (newQuestion == null) {
+            throw new IllegalArgumentException();
+        }
+        
+        currentQuestion = newQuestion;
+    }
+    
+    public Question getQuestion() {
+        return currentQuestion;
+    }
+    
+    /**
+     * Yields the player.
+     * @return The player. Not null.
+     */
+    public Player getPlayer() {
+        return player;
+    }
+    
+    /**
+     * Sends a text to the client.
+     * @param text The text to be sent.
+     */
+    public void postText(String text) {
+        if (text == null) {
+            throw new NullPointerException();
+        }
+    }
+    
+    /**
+     * Sends the question text to the client.
+     */
+    public void postQuestion() {
+        
+    }
+    
+    /**
+     * Gets a text from the client. Will block until there is a text.
+     * @return The text from the client.
+     */
+    public String getText() {
+        return null;
+    }
+    
+    public void addAnswer(Answer answer) {
+        currentQuestion.addPlayerAnswer(player, answer);
+    }
+}
